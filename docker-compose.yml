@@ -1,0 +1,58 @@
+# VERSION  0.1.0
+# AUTHOR: João A Silva
+# DESCRIPTION: K10i
+# CREATED AT: 2021-07-06
+# UPDATEd AT: 2021-07-06 by João A Silva
+
+version: '3'
+
+services:
+
+  api:
+    #build: .
+    image: flask-rq-example:latest
+    container_name: flask-rq-example-api
+    ports:
+      - 5000:5000
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - SERVICE=api
+      - FLASK_DEBUG=1
+      - FLASK_CONFIG=development
+      - FLASK_APP=run.py
+      - REDIS=redis://redis:6379/0
+      - ENV=develop
+    depends_on:
+      - redis
+
+  worker:
+    # build: .
+    image: flask-rq-example:latest
+    deploy:
+      replicas: 1 # to scale up, increase replicas; to scale down, decrease it. Needs at least one
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - SERVICE=worker
+      - FLASK_DEBUG=1
+      - FLASK_CONFIG=development
+      - REDIS=redis://redis:6379/0      
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:5.0.7-alpine
+    container_name: redis-db
+
+  dashboard:
+    #build: ./dashboard
+    image: eoranged/rq-dashboard
+    environment:
+      - RQ_DASHBOARD_REDIS_URL=redis://redis:6379/0
+    container_name: rq_dashboard
+    ports:
+      - 9181:9181
+    #command: rq-dashboard -H redis
+    depends_on:
+      - redis
